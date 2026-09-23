@@ -1,13 +1,23 @@
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, array_to_img, load_img
+"""
+Generates one augmented copy of each training image using random
+geometric transformations.
+
+Input:  data/train/{benign,malignant}
+Output: data/augmented_images/{benign,malignant}
+"""
+
 import os
+from tensorflow.keras.preprocessing.image import (
+    ImageDataGenerator, img_to_array, array_to_img, load_img
+)
 
-# Set the path to your dataset
-train_data_dir = '/Users/shahadsaeed/Desktop/melanoma_cancer_dataset/train'
+# Paths (relative to the repository root)
+TRAIN_DATA_DIR = os.path.join('data', 'train')
+AUGMENTED_DATA_DIR = os.path.join('data', 'augmented_images')
 
-# Set the path to store augmented images on the desktop
-augmented_data_dir = '/Users/shahadsaeed/Desktop/augmented_images'
+# Number of augmented copies to generate per original image
+AUGMENTATIONS_PER_IMAGE = 1
 
-# Create an ImageDataGenerator for augmentation
 datagen = ImageDataGenerator(
     rotation_range=40,
     width_shift_range=0.2,
@@ -18,32 +28,32 @@ datagen = ImageDataGenerator(
     fill_mode='nearest'
 )
 
-# Function to perform data augmentation for a specific class
-def augment_data(class_folder, class_name):
-    class_path = os.path.join(train_data_dir, class_folder)
 
-    # Make sure the augmented data directory exists
-    augmented_class_dir = os.path.join(augmented_data_dir, class_name)
-    os.makedirs(augmented_class_dir, exist_ok=True)
+def augment_class(class_name):
+    """Generate augmented copies for every image in one class folder."""
+    class_path = os.path.join(TRAIN_DATA_DIR, class_name)
+    output_path = os.path.join(AUGMENTED_DATA_DIR, class_name)
+    os.makedirs(output_path, exist_ok=True)
 
-    # Get a list of all images in the class folder
-    images = [os.path.join(class_path, img) for img in os.listdir(class_path) if img.endswith(".jpg")]
+    images = [
+        os.path.join(class_path, f)
+        for f in os.listdir(class_path)
+        if f.lower().endswith('.jpg')
+    ]
 
-    # Iterate through the images and generate augmented images
+    print(f"Augmenting {len(images)} images in '{class_name}'...")
+
     for img_path in images:
-        # Load the image
-        img = load_img(img_path)
-        x = img_to_array(img)
-        x = x.reshape((1,) + x.shape)
+        x = img_to_array(load_img(img_path))
 
-        # Generate augmented images and save them
-        for i in range(1):  # Set the desired number of augmentations for each image
-            augmented_img = datagen.random_transform(x[0])
-            augmented_img_path = os.path.join(augmented_class_dir, f'aug_{i}_{os.path.basename(img_path)}')
-            array_to_img(augmented_img).save(augmented_img_path)
+        for i in range(AUGMENTATIONS_PER_IMAGE):
+            augmented = datagen.random_transform(x)
+            filename = f'aug_{i}_{os.path.basename(img_path)}'
+            array_to_img(augmented).save(os.path.join(output_path, filename))
 
-# Augment the malignant class in the training dataset
-augment_data('malignant', 'malignant')
+    print(f"Saved augmented images to {output_path}")
 
-# Augment the benign class in the training dataset
-augment_data('benign', 'benign')
+
+if __name__ == '__main__':
+    augment_class('malignant')
+    augment_class('benign')
