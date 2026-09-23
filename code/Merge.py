@@ -10,7 +10,7 @@ Output: augmented_train/{benign,malignant}
 import os
 import shutil
 
-# Paths (relative to the repository root)
+# Paths
 TRAIN_PATH = 'train'
 AUGMENTED_PATH = 'augmented_images'
 MERGED_PATH = 'augmented_train'
