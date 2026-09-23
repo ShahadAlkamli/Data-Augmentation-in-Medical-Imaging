@@ -57,25 +57,3 @@ def augment_class(class_name):
 if __name__ == '__main__':
     augment_class('malignant')
     augment_class('benign')
-    images = [
-        os.path.join(class_path, f)
-        for f in os.listdir(class_path)
-        if f.lower().endswith('.jpg')
-    ]
-
-    print(f"Augmenting {len(images)} images in '{class_name}'...")
-
-    for img_path in images:
-        x = img_to_array(load_img(img_path))
-
-        for i in range(AUGMENTATIONS_PER_IMAGE):
-            augmented = datagen.random_transform(x)
-            filename = f'aug_{i}_{os.path.basename(img_path)}'
-            array_to_img(augmented).save(os.path.join(output_path, filename))
-
-    print(f"Saved augmented images to {output_path}")
-
-
-if __name__ == '__main__':
-    augment_class('malignant')
-    augment_class('benign')
