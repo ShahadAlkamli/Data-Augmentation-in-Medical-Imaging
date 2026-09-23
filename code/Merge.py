@@ -2,18 +2,18 @@
 Merges the original training images with their augmented copies into a
 single folder used for training.
 
-Input:  data/train/{benign,malignant}
-        data/augmented_images/{benign,malignant}
-Output: data/augmented_train/{benign,malignant}
+Input:  train/{benign,malignant}
+        augmented_images/{benign,malignant}
+Output: augmented_train/{benign,malignant}
 """
 
 import os
 import shutil
 
-BASE_PATH = 'data'
-TRAIN_PATH = os.path.join(BASE_PATH, 'train')
-AUGMENTED_PATH = os.path.join(BASE_PATH, 'augmented_images')
-MERGED_PATH = os.path.join(BASE_PATH, 'augmented_train')
+# Paths (relative to the repository root)
+TRAIN_PATH = 'train'
+AUGMENTED_PATH = 'augmented_images'
+MERGED_PATH = 'augmented_train'
 
 CLASSES = ['benign', 'malignant']
 
@@ -35,6 +35,16 @@ def merge_folder(source_folder):
             )
 
 
+if __name__ == '__main__':
+    os.makedirs(MERGED_PATH, exist_ok=True)
+
+    merge_folder(TRAIN_PATH)
+    merge_folder(AUGMENTED_PATH)
+
+    print("\nMerge complete:")
+    for class_name in CLASSES:
+        count = len(os.listdir(os.path.join(MERGED_PATH, class_name)))
+        print(f"  {class_name}: {count} images")
 if __name__ == '__main__':
     os.makedirs(MERGED_PATH, exist_ok=True)
 
