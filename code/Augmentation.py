@@ -11,7 +11,7 @@ from tensorflow.keras.preprocessing.image import (
     ImageDataGenerator, img_to_array, array_to_img, load_img
 )
 
-# Paths (relative to the repository root)
+# Paths
 TRAIN_DATA_DIR = 'train'
 AUGMENTED_DATA_DIR = 'augmented_images'
 
