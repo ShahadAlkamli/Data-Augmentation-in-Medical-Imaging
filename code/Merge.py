@@ -45,13 +45,3 @@ if __name__ == '__main__':
     for class_name in CLASSES:
         count = len(os.listdir(os.path.join(MERGED_PATH, class_name)))
         print(f"  {class_name}: {count} images")
-if __name__ == '__main__':
-    os.makedirs(MERGED_PATH, exist_ok=True)
-
-    merge_folder(TRAIN_PATH)
-    merge_folder(AUGMENTED_PATH)
-
-    print("\nMerge complete:")
-    for class_name in CLASSES:
-        count = len(os.listdir(os.path.join(MERGED_PATH, class_name)))
-        print(f"  {class_name}: {count} images")
