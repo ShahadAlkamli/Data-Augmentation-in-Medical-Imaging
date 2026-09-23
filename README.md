@@ -14,9 +14,9 @@ This project examines a common assumption in medical image classification: that 
 
 ```
 ├── code/
-│     ├── augmentation.py        # Generates augmented copies of training images
-│     ├── merge_datasets.py      # Merges original and augmented images
-│     └── classification.py      # PCA + four classifiers, evaluation
+│     ├── Augmentation.py        # Generates augmented copies of training images
+│     ├── Merge.py               # Merges original and augmented images
+│     └── Evaluation.py          # PCA, classifier training, and evaluation
 │
 └── README.md
 ```
