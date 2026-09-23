@@ -2,8 +2,8 @@
 Generates one augmented copy of each training image using random
 geometric transformations.
 
-Input:  data/train/{benign,malignant}
-Output: data/augmented_images/{benign,malignant}
+Input:  train/{benign,malignant}
+Output: augmented_images/{benign,malignant}
 """
 
 import os
@@ -12,8 +12,8 @@ from tensorflow.keras.preprocessing.image import (
 )
 
 # Paths (relative to the repository root)
-TRAIN_DATA_DIR = os.path.join('data', 'train')
-AUGMENTED_DATA_DIR = os.path.join('data', 'augmented_images')
+TRAIN_DATA_DIR = 'train'
+AUGMENTED_DATA_DIR = 'augmented_images'
 
 # Number of augmented copies to generate per original image
 AUGMENTATIONS_PER_IMAGE = 1
@@ -35,6 +35,28 @@ def augment_class(class_name):
     output_path = os.path.join(AUGMENTED_DATA_DIR, class_name)
     os.makedirs(output_path, exist_ok=True)
 
+    images = [
+        os.path.join(class_path, f)
+        for f in os.listdir(class_path)
+        if f.lower().endswith('.jpg')
+    ]
+
+    print(f"Augmenting {len(images)} images in '{class_name}'...")
+
+    for img_path in images:
+        x = img_to_array(load_img(img_path))
+
+        for i in range(AUGMENTATIONS_PER_IMAGE):
+            augmented = datagen.random_transform(x)
+            filename = f'aug_{i}_{os.path.basename(img_path)}'
+            array_to_img(augmented).save(os.path.join(output_path, filename))
+
+    print(f"Saved augmented images to {output_path}")
+
+
+if __name__ == '__main__':
+    augment_class('malignant')
+    augment_class('benign')
     images = [
         os.path.join(class_path, f)
         for f in os.listdir(class_path)
