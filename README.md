@@ -1,200 +1,121 @@
-# Medical Image Classification with Data Augmentation  
-### Improving Skin Cancer Detection Using Traditional Machine Learning Models
+# Melanoma Classification: Evaluating the Impact of Data Augmentation
 
-This project explores the impact of **data augmentation** on **medical image classification**, specifically for **melanoma (malignant) vs. benign skin lesions**.  
-The pipeline includes:
-
-- Data augmentation using `ImageDataGenerator`  
-- Merging raw and augmented datasets  
-- Image preprocessing and resizing  
-- Dimensionality reduction using PCA  
-- Classification using SVM, Decision Tree, Random Forest, and Naive Bayes  
-- Performance evaluation before and after augmentation
+A controlled comparison of four classical machine learning classifiers on melanoma skin cancer images, measuring whether geometric data augmentation improves classification performance.
 
 ---
 
-## 📁 Project Structure
+## 📌 Overview
+
+This project examines a common assumption in medical image classification: that augmenting the training set with geometrically transformed copies improves model performance. Four classifiers are trained twice under identical conditions, once on the original training set and once on a doubled set that includes augmented copies, isolating augmentation as the only variable.
+
+---
+
+## 📁 Repository Structure
 
 ```
-Medical-Image-Classification-Augmentation/
-│
-├── augmented_images/               # Generated augmented images (benign/malignant)
-│
 ├── code/
-│     ├── Augmentation.py           # Code for generating augmented images
-│     ├── Merge.py                  # Combines raw + augmented datasets
-│     └── Evaluation.py             # PCA + ML classifiers + evaluation
-│
-├── results_and_analysis/
-│     ├── Results before augmentation.pdf
-│     └── Results after augmentation.pdf
+│     ├── augmentation.py        # Generates augmented copies of training images
+│     ├── merge_datasets.py      # Merges original and augmented images
+│     └── classification.py      # PCA + four classifiers, evaluation
 │
 └── README.md
 ```
 
 ---
 
-## 🧬 Dataset
+## 🔬 Methodology
 
-Two classes are used:
+### **1. Data Augmentation**
 
-- **benign**
-- **malignant**
+Each training image produces one augmented copy using random geometric transformations:
 
-Images are augmented to artificially increase dataset size and improve model generalization.
+| Transformation | Range |
+|----------------|-------|
+| Rotation | ±40° |
+| Width / height shift | 20% |
+| Shear | 20% |
+| Zoom | 20% |
+| Horizontal flip | enabled |
 
----
+Empty regions introduced by transformation are filled using nearest-neighbour interpolation.
 
-## 🧪 1. Data Augmentation
+### **2. Dataset Merging**
 
-The augmentation script (`Augmentation.py`) applies transformations such as:
+Augmented copies are merged with the original training images, doubling the training set. The test set remains untouched.
 
-- Rotation (40°)  
-- Width/height shifts  
-- Shearing  
-- Zooming  
-- Horizontal flips  
-- Nearest-pixel fill  
+### **3. Feature Extraction**
 
-These transformations enrich the dataset and reduce overfitting.
+- Images resized to 100 × 100 and flattened
+- **PCA** reduces dimensionality to 100 components
+- PCA is fitted on the training set and applied to the test set
 
-Example (from your code):
+### **4. Classification**
 
-```python
-datagen = ImageDataGenerator(
-    rotation_range=40,
-    width_shift_range=0.2,
-    height_shift_range=0.2,
-    shear_range=0.2,
-    zoom_range=0.2,
-    horizontal_flip=True,
-    fill_mode='nearest'
-)
-```
+Four classifiers are compared under identical conditions:
 
-Augmented images are stored in:
+- Support Vector Machine (linear kernel)
+- Decision Tree
+- Random Forest
+- Gaussian Naive Bayes
 
-```
-augmented_images/
-    ├── benign/
-    └── malignant/
-```
+Evaluation covers accuracy, precision, recall, F1-score, and confusion matrices.
 
 ---
 
-## 🗂️ 2. Dataset Merging
+## 📈 Results
 
-`Merge.py` merges:
+All classifiers were evaluated on a held-out test set of 1,000 images (500 benign, 500 malignant).
 
-- Original training images  
-- Augmented images  
+### Accuracy
 
-into a single folder: `augmented_train/`
+| Classifier | Before | After | Δ |
+|------------|-------:|------:|------:|
+| Random Forest | **0.887** | 0.885 | −0.002 |
+| SVM (linear) | 0.862 | **0.871** | +0.009 |
+| Decision Tree | 0.841 | **0.847** | +0.006 |
+| Naive Bayes | **0.826** | 0.793 | −0.033 |
 
-This ensures balanced classes and increased training data.
+### Weighted metrics after augmentation
 
----
+| Classifier | Precision | Recall | F1 |
+|------------|----------:|-------:|-----:|
+| Random Forest | 0.89 | 0.89 | 0.88 |
+| SVM (linear) | 0.87 | 0.87 | 0.87 |
+| Decision Tree | 0.85 | 0.85 | 0.85 |
+| Naive Bayes | 0.83 | 0.79 | 0.79 |
 
-## 🖼️ 3. Preprocessing & PCA
+### Malignant class detection
 
-`Evaluation.py` performs:
+Per-class recall on malignant lesions, the clinically consequential metric:
 
-- Image loading using `skimage`
-- Resizing to 100×100 pixels
-- Flattening pixel arrays
-- PCA reduction to 100 components
-
-PCA dramatically reduces dimensionality while retaining the most important variance.
-
----
-
-## 🤖 4. Machine Learning Models
-
-Four traditional classifiers are trained:
-
-| Model | Type |
-|-------|------|
-| SVM | Support Vector Machine (Linear Kernel) |
-| Decision Tree | CART |
-| Random Forest | Ensemble of Trees |
-| Naive Bayes | Gaussian NB |
+| Classifier | Before | After |
+|------------|-------:|------:|
+| Random Forest | 0.90 | 0.90 |
+| SVM (linear) | 0.85 | **0.89** |
+| Decision Tree | 0.84 | **0.86** |
+| Naive Bayes | 0.78 | **0.64** |
 
 ---
 
-## 📊 5. Results
+### Analysis
 
-### **Before Augmentation**
-From *Results before augmentation.pdf*:
+**Augmentation produced no meaningful gain.** Three of four classifiers shifted by less than one percentage point, a margin consistent with run-to-run variance rather than genuine improvement.
 
-- **SVM Accuracy:** 0.862  
-- **Random Forest Accuracy:** 0.887 (best model)  
-- **Naive Bayes:** 0.826  
-- **Decision Tree:** 0.841  
+**Random Forest led in both settings** and was unaffected by the additional training data, suggesting its ensemble of decision boundaries had already converged on the information available in the feature representation.
 
-Confusion matrices (page 2) show strong performance for Random Forest.
+**Naive Bayes degraded substantially.** Its malignant recall fell from 0.78 to 0.64 while precision on that class rose to 0.93, meaning the classifier became conservative: it predicted malignant less often but was more confident when it did. In a diagnostic context this is the wrong direction, since missed malignant cases carry greater cost than false alarms. The independence assumption underlying Naive Bayes is sensitive to shifts in feature distribution, and the augmented copies altered those distributions.
+
+**Why augmentation contributed little.** Features here are PCA components of flattened pixel intensities, which encode global brightness and colour patterns rather than spatial arrangement. Rotation, shifting, and flipping modify precisely the spatial properties this representation discards, so augmented images occupy nearly the same region of feature space as their originals. Geometric augmentation would be expected to contribute more under convolutional architectures, where learned filters are sensitive to the spatial structure these transformations affect.
 
 ---
 
-### **After Augmentation**
-From *Results after augmentation.pdf*:
+## 🗂 Dataset
 
-- **SVM Accuracy:** 0.871  
-- **Random Forest Accuracy:** 0.885  
-- **Decision Tree:** 0.847  
-- **Naive Bayes:** 0.793  
-
-SVM and Decision Tree improved slightly.  
-Naive Bayes decreased in accuracy due to noise sensitivity.  
-Random Forest remained the strongest performer (0.885).  
-See confusion matrices on page 2.
-
----
-
-## 📈 Accuracy Comparison
-
-### **Before Augmentation (Best: Random Forest 0.887)**  
-### **After Augmentation (Best: Random Forest 0.885)**  
-
-Augmentation improved stability but did not surpass the best pre-augmentation RF accuracy.  
-However, it improved class balance and model robustness.
-
----
-
-## ▶️ How to Run the Code
-
-### **1. Generate Augmented Images**
-```bash
-python Augmentation.py
-```
-
-### **2. Merge Raw + Augmented Data**
-```bash
-python Merge.py
-```
-
-### **3. Train Models & Evaluate**
-```bash
-python Evaluation.py
-```
-
-This produces:
-
-- Classification reports  
-- Confusion matrices  
-- Accuracy comparison plots  
-
----
-
-## 🧠 Key Findings
-
-- **Random Forest** consistently achieved the highest accuracy (0.885–0.887).  
-- **SVM** improved after augmentation (0.862 → 0.871).  
-- Augmentation increased dataset diversity and reduced overfitting for some models.  
-- Naive Bayes was negatively affected by augmentation noise.
+Melanoma skin cancer dataset, binary classification between benign and malignant lesions.
+Test set: 1,000 images, evenly balanced across both classes.
 
 ---
 
 ## 📜 License
 
-This project is for educational and research purposes.
-
+This repository is provided for academic and research purposes.
