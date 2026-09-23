@@ -1,134 +1,121 @@
+"""
+Melanoma classification using PCA feature extraction and four classical
+classifiers. Compares performance on the original versus the augmented
+training set.
+
+Set TRAIN_FOLDER to 'data/train' for the baseline run, or
+'data/augmented_train' for the augmented run.
+"""
+
 import os
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from skimage import io, transform
 from sklearn.decomposition import PCA
-from sklearn.model_selection import train_test_split
 from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-import seaborn as sns
-import matplotlib.pyplot as plt
 
-# Function to load and resize images
-def load_and_resize_images(folder, target_size=(100, 100)):
-    images = []
-    labels = []
-    for subfolder in os.listdir(folder):
+# Paths (relative to the repository root)
+TRAIN_FOLDER = os.path.join('data', 'augmented_train')
+TEST_FOLDER = os.path.join('data', 'test')
+
+IMAGE_SIZE = (100, 100)
+N_COMPONENTS = 100
+RANDOM_STATE = 42
+
+
+def load_and_resize_images(folder, target_size=IMAGE_SIZE):
+    """Load every image under folder, resize, flatten, and label it."""
+    images, labels = [], []
+
+    for subfolder in sorted(os.listdir(folder)):
         subfolder_path = os.path.join(folder, subfolder)
-        if os.path.isdir(subfolder_path):
-            for filename in os.listdir(subfolder_path):
-                img_path = os.path.join(subfolder_path, filename)
-                img = io.imread(img_path)
-                img_resized = transform.resize(img, target_size)
-                images.append(img_resized.flatten())  # Flatten the resized image
-                labels.append(1 if subfolder.lower() == 'malignant' else 0)
+        if not os.path.isdir(subfolder_path):
+            continue
+
+        for filename in os.listdir(subfolder_path):
+            if filename.startswith('.'):
+                continue
+            img = io.imread(os.path.join(subfolder_path, filename))
+            img_resized = transform.resize(img, target_size)
+            images.append(img_resized.flatten())
+            labels.append(1 if subfolder.lower() == 'malignant' else 0)
+
     return np.array(images), np.array(labels)
 
-# Load and resize images from the TRAIN folder
-train_folder = '/Users/shahadsaeed/Desktop/melanoma_cancer_dataset/augmenetd_train'
-X_train, y_train = load_and_resize_images(train_folder)
 
-# Load and resize images from the TEST folder
-test_folder = '/Users/shahadsaeed/Desktop/melanoma_cancer_dataset/test'
-X_test, y_test = load_and_resize_images(test_folder)
-
-# Perform PCA for dimensionality reduction
-num_components = 100  # Adjust this based on your needs
-pca = PCA(n_components=num_components)
-X_train_pca = pca.fit_transform(X_train)
-X_test_pca = pca.transform(X_test)
-
-# Support Vector Machine (SVM) classifier
-print("Training SVM classifier...")
-svm_classifier = svm.SVC(kernel='linear')
-svm_classifier.fit(X_train_pca, y_train)
-print("SVM training complete.")
-
-# Decision Tree classifier
-print("Training Decision Tree classifier...")
-dt_classifier = DecisionTreeClassifier(random_state=42)
-dt_classifier.fit(X_train_pca, y_train)
-print("Decision Tree training complete.")
-
-# Random Forest classifier
-print("Training Random Forest classifier...")
-rf_classifier = RandomForestClassifier(random_state=42)
-rf_classifier.fit(X_train_pca, y_train)
-print("Random Forest training complete.")
-
-# Naive Bayes classifier
-print("Training Naive Bayes classifier...")
-nb_classifier = GaussianNB()
-nb_classifier.fit(X_train_pca, y_train)
-print("Naive Bayes training complete.")
-
-# Evaluation on the TEST set
-print("Evaluating classifiers on the TEST set...")
-
-# Support Vector Machine (SVM) predictions
-print("Making predictions with SVM...")
-svm_predictions = svm_classifier.predict(X_test_pca)
-svm_accuracy = accuracy_score(y_test, svm_predictions)
-svm_classification_report = classification_report(y_test, svm_predictions)
-print("SVM Test Accuracy:", svm_accuracy)
-print("SVM Test Classification Report:\n", svm_classification_report)
-
-# Decision Tree predictions
-print("Making predictions with Decision Tree...")
-dt_predictions = dt_classifier.predict(X_test_pca)
-dt_accuracy = accuracy_score(y_test, dt_predictions)
-dt_classification_report = classification_report(y_test, dt_predictions)
-print("Decision Tree Test Accuracy:", dt_accuracy)
-print("Decision Tree Test Classification Report:\n", dt_classification_report)
-
-# Random Forest predictions
-print("Making predictions with Random Forest...")
-rf_predictions = rf_classifier.predict(X_test_pca)
-rf_accuracy = accuracy_score(y_test, rf_predictions)
-rf_classification_report = classification_report(y_test, rf_predictions)
-print("Random Forest Test Accuracy:", rf_accuracy)
-print("Random Forest Test Classification Report:\n", rf_classification_report)
-
-# Naive Bayes predictions
-print("Making predictions with Naive Bayes...")
-nb_predictions = nb_classifier.predict(X_test_pca)
-nb_accuracy = accuracy_score(y_test, nb_predictions)
-nb_classification_report = classification_report(y_test, nb_predictions)
-print("Naive Bayes Test Accuracy:", nb_accuracy)
-print("Naive Bayes Test Classification Report:\n", nb_classification_report)
-
-# Confusion matrix visualization
 def plot_confusion_matrix(y_true, y_pred, title):
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(4, 4))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False)
     plt.title(title)
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.tight_layout()
     plt.show()
 
-# Plot confusion matrices for each classifier
-plot_confusion_matrix(y_test, svm_predictions, "SVM Confusion Matrix")
-plot_confusion_matrix(y_test, dt_predictions, "Decision Tree Confusion Matrix")
-plot_confusion_matrix(y_test, rf_predictions, "Random Forest Confusion Matrix")
-plot_confusion_matrix(y_test, nb_predictions, "Naive Bayes Confusion Matrix")
 
-# Print and compare metrics for the test set
-print("\nTest Set Metrics Comparison:")
-print("SVM Test Accuracy:", svm_accuracy)
-print("Decision Tree Test Accuracy:", dt_accuracy)
-print("Random Forest Test Accuracy:", rf_accuracy)
-print("Naive Bayes Test Accuracy:", nb_accuracy)
+if __name__ == '__main__':
+    # Load data
+    print(f"Loading training images from {TRAIN_FOLDER}...")
+    X_train, y_train = load_and_resize_images(TRAIN_FOLDER)
 
-# Accuracy Comparison Bar Plot
-classifiers = ['SVM', 'Decision Tree', 'Random Forest', 'Naive Bayes']
-accuracies = [svm_accuracy, dt_accuracy, rf_accuracy, nb_accuracy]
+    print(f"Loading test images from {TEST_FOLDER}...")
+    X_test, y_test = load_and_resize_images(TEST_FOLDER)
 
-plt.figure(figsize=(8, 6))
-sns.barplot(x=classifiers, y=accuracies, palette="viridis")
-plt.title('Test Set Accuracy Comparison')
-plt.ylim(0, 1.0)
-plt.ylabel('Accuracy')
-plt.show()
+    print(f"Training set: {X_train.shape[0]} images")
+    print(f"Test set:     {X_test.shape[0]} images")
+
+    # Dimensionality reduction
+    print(f"\nApplying PCA ({N_COMPONENTS} components)...")
+    pca = PCA(n_components=N_COMPONENTS, random_state=RANDOM_STATE)
+    X_train_pca = pca.fit_transform(X_train)
+    X_test_pca = pca.transform(X_test)
+
+    explained = pca.explained_variance_ratio_.sum()
+    print(f"Explained variance: {explained:.3f}")
+
+    # Classifiers
+    classifiers = {
+        'SVM': svm.SVC(kernel='linear', random_state=RANDOM_STATE),
+        'Decision Tree': DecisionTreeClassifier(random_state=RANDOM_STATE),
+        'Random Forest': RandomForestClassifier(random_state=RANDOM_STATE),
+        'Naive Bayes': GaussianNB(),
+    }
+
+    results = {}
+
+    for name, clf in classifiers.items():
+        print(f"\nTraining {name}...")
+        clf.fit(X_train_pca, y_train)
+
+        predictions = clf.predict(X_test_pca)
+        accuracy = accuracy_score(y_test, predictions)
+        results[name] = (accuracy, predictions)
+
+        print(f"{name} test accuracy: {accuracy:.3f}")
+        print(classification_report(y_test, predictions, zero_division=0))
+
+    # Confusion matrices
+    for name, (_, predictions) in results.items():
+        plot_confusion_matrix(y_test, predictions, f'{name} Confusion Matrix')
+
+    # Accuracy comparison
+    names = list(results.keys())
+    accuracies = [results[n][0] for n in names]
+
+    plt.figure(figsize=(8, 6))
+    sns.barplot(x=names, y=accuracies, hue=names, palette='viridis', legend=False)
+    plt.title('Test Set Accuracy Comparison')
+    plt.ylabel('Accuracy')
+    plt.ylim(0, 1.0)
+    plt.tight_layout()
+    plt.show()
+
+    print('\nSummary:')
+    for name, (accuracy, _) in results.items():
+        print(f"  {name:<15} {accuracy:.3f}")
